@@ -9,15 +9,13 @@ type Args struct {
 func parse_args() *Args {
 	var args = &Args{}
 
-	if len(os.Args) < 2 {
-		exit(1, "Target absorb commit not specified.")
+	if len(os.Args) > 1 {
+		sha1, err := expand_ref(os.Args[1], list_commits_in_branch())
+		if err != nil {
+			exit(2, err.Error())
+		}
+		args.target_commit = sha1
 	}
-
-	sha1, err := expand_ref(os.Args[1], list_commits_in_branch())
-	if err != nil {
-		exit(2, err.Error())
-	}
-	args.target_commit = sha1
 	return args
 }
 
@@ -29,6 +27,13 @@ func main() {
 
 	args := parse_args()
 
-	do_absorb(args)
+	if args.target_commit != "" {
+		do_absorb(args)
+	} else {
+		candidate_commits := find_possible_merge_commits()
+		if len(candidate_commits) != 1 {
+			exit(1, "%d candidate commits found on this branch.", len(candidate_commits))
+		}
+	}
 	exit_ok()
 }
