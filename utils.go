@@ -2,14 +2,24 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-func exit(code int, msg string) {
-	log.Printf(msg)
+func exit_ok() {
+	exit(0, "")
+}
+
+func exit(code int, format string, args ...interface{}) {
+	if len(format) > 0 {
+		if !strings.HasSuffix(format, "\n") {
+			format = format + "\n"
+		}
+		fmt.Printf(format, args...)
+	}
 	os.Exit(code)
 }
 

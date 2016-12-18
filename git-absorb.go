@@ -28,5 +28,5 @@ func main() {
 	args := parse_args()
 
 	do_absorb(args)
-	os.Exit(0)
+	exit_ok()
 }
