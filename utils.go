@@ -32,6 +32,10 @@ func exec_cmd(cmd string, args ...string) []string {
 	if err != nil {
 		log.Fatal("'"+cmd+" "+strings.Join(args, " ")+"' failed. ", err)
 	}
+	return parse_cmd_exec_result(res)
+}
+
+func parse_cmd_exec_result(res []byte) []string {
 	if len(res) == 0 {
 		return make([]string, 0)
 	}
@@ -81,13 +85,14 @@ func stash_pop() {
 	git_cmd("stash", "pop", "--quiet")
 }
 
-func ensure_valid_sha1(sha1 string, commits []string) (string, error) {
-	for _, c := range commits {
-		if strings.HasPrefix(c, sha1) {
-			return c, nil
-		}
+// Expand a ref (in the form of a shortened sha1 or other valid ref spec like
+// HEAD) to the full sha1. Also useful for verifying the specified ref is valid.
+func expand_ref(sha1 string, commits []string) (string, error) {
+	res, err := exec.Command("git", "rev-parse", "--verify", sha1).Output()
+	if err != nil {
+		return "", errors.New("'" + sha1 + "' is not a valid sha1.")
 	}
-	return "", errors.New(sha1 + " not in [" + strings.Join(commits, " ") + "].")
+	return parse_cmd_exec_result(res)[0], nil
 }
 
 // Turn a slice into a set(ish)

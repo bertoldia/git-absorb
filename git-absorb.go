@@ -13,7 +13,7 @@ func parse_args() *Args {
 		exit(1, "Target absorb commit not specified.")
 	}
 
-	sha1, err := ensure_valid_sha1(os.Args[1], list_commits_in_branch())
+	sha1, err := expand_ref(os.Args[1], list_commits_in_branch())
 	if err != nil {
 		exit(2, err.Error())
 	}
