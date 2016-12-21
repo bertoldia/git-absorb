@@ -64,6 +64,8 @@ func list_dirty_files() []string {
 	return git_cmd("diff-index", "--name-only", "HEAD", "--")
 }
 
+// List either file with staged changes or, if no changes have been staged, all
+// dirty files.
 func list_modified_files() ([]string, bool) {
 	staged := list_staged_files()
 	if len(staged) > 0 {
