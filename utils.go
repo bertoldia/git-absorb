@@ -35,6 +35,19 @@ func exec_cmd(cmd string, args ...string) []string {
 	return parse_cmd_exec_result(res)
 }
 
+func current_branch() string {
+	//return git_cmd("rev-parse", "--abbrev-ref", "HEAD")[0]
+	return git_cmd("name-rev", "--name-only", "HEAD")[0]
+}
+
+func branch_upstream(branch string) string {
+	return git_cmd("rev-parse", "--abbrev-ref", branch+"@{upstream}")[0]
+}
+
+func merge_base(branch, upstream string) string {
+	return git_cmd("merge-base", upstream, branch)[0]
+}
+
 func parse_cmd_exec_result(res []byte) []string {
 	if len(res) == 0 {
 		return make([]string, 0)
@@ -48,9 +61,9 @@ func list_files_modified_by_commit(sha1 string) []string {
 
 // Return the sha1 of all commits in the current branch.
 func list_commits_in_branch() []string {
-	cb := git_cmd("rev-parse", "--abbrev-ref", "HEAD")[0]
-	us := git_cmd("rev-parse", "--abbrev-ref", cb+"@{upstream}")[0]
-	mb := git_cmd("merge-base", us, cb)[0]
+	cb := current_branch()
+	us := branch_upstream(cb)
+	mb := merge_base(us, cb)
 	return git_cmd("rev-list", mb+".."+cb)
 }
 
