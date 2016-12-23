@@ -10,7 +10,7 @@ func parse_args() *Args {
 	var args = &Args{}
 
 	if len(os.Args) > 1 {
-		sha1, err := expand_ref(os.Args[1], list_commits_in_branch())
+		sha1, err := expand_ref(os.Args[1])
 		if err != nil {
 			exit(2, err.Error())
 		}

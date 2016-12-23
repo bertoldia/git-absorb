@@ -89,7 +89,7 @@ func stash_pop() {
 
 // Expand a ref (in the form of a shortened sha1 or other valid ref spec like
 // HEAD) to the full sha1. Also useful for verifying the specified ref is valid.
-func expand_ref(sha1 string, commits []string) (string, error) {
+func expand_ref(sha1 string) (string, error) {
 	res, err := exec.Command("git", "rev-parse", "--verify", sha1).Output()
 	if err != nil {
 		return "", errors.New("'" + sha1 + "' is not a valid sha1.")
