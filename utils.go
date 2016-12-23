@@ -110,6 +110,30 @@ func expand_ref(sha1 string) (string, error) {
 	return parse_cmd_exec_result(res)[0], nil
 }
 
+type cleanup_func func()
+
+func noop() {}
+
+// Commit uncommitted changes and return a cleanup function. If any changes have
+// been stages, only commit those and stash the remaining changes. In this case
+// the cleanup operation is to stash pop the remaining changes. If none of the
+// outstanding changed have been stages, commit them all. In this case the
+// cleanup function is a noop.
+func commit_changes(sha1 string) cleanup_func {
+	if !changes_staged() {
+		git_cmd("add", "-u")
+	}
+
+	var action string = "--fixup"
+	git_cmd("commit", action, sha1, "--no-edit")
+
+	if still_dirty := list_dirty_files(); len(still_dirty) != 0 {
+		stash()
+		return stash_pop
+	}
+	return noop
+}
+
 // Turn a slice into a set(ish)
 func set(a []string) map[string]bool {
 	res := make(map[string]bool, len(a))
