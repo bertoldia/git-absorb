@@ -39,5 +39,28 @@ func get_candidate_absorb_commits() []string {
 }
 
 func find_possible_merge_commits(args *Args) []string {
-	return get_candidate_absorb_commits()
+	candidate_commits := get_candidate_absorb_commits()
+	if len(candidate_commits) == 0 {
+		return candidate_commits
+	}
+	return approach1(candidate_commits, args)
+}
+
+func approach1(commits []string, args *Args) []string {
+	var valid_commits = make([]string, 0)
+	cleanup := commit_changes(commits[0])
+	head_reflog := get_head_ref()
+	//defer restore_to_reflog_point(head_reflog)
+	defer cleanup()
+
+	for _, commit := range commits {
+		update_commit_msg(commit)
+		if err := rebase_to_ref(commit); err != nil {
+			rebase_abort()
+		} else {
+			valid_commits = append(valid_commits, commit)
+			restore_to_reflog_point(head_reflog)
+		}
+	}
+	return valid_commits
 }
