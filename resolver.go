@@ -1,8 +1,6 @@
 package main
 
-import (
-	"os"
-)
+import "os"
 
 // Test if super contains all of sub
 func _contains(super []string, sub []string) bool {
@@ -47,6 +45,7 @@ func _candidate_absorb_commits() []string {
 
 func _successful_absorb_commits_by_brute_force(commits []string, args *Args) []string {
 	os.Setenv("GIT_EDITOR", "true")
+
 	var valid_commits = make([]string, 0)
 	cleanup, undo := commit_changes(commits[0])
 	defer undo()
