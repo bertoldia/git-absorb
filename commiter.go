@@ -8,5 +8,7 @@ func do_absorb(args *Args) {
 	cleanup := commit_changes(args.target_commit)
 	defer cleanup()
 
-	git_cmd("rebase", "-i", "--autosquash", args.target_commit+"~1")
+	if err := rebase_to_ref(args.target_commit); err != nil {
+		rebase_abort()
+	}
 }

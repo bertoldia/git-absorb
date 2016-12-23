@@ -92,6 +92,12 @@ func changes_staged() bool {
 	return err != nil
 }
 
+func rebase_to_ref(sha1 string) error {
+	args := []string{"rebase", "-i", "--autosquash", sha1 + "~1"}
+	_, err := exec.Command("git", args...).Output()
+	return err
+}
+
 func stash() {
 	git_cmd("stash", "--quiet")
 }
