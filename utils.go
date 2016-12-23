@@ -87,9 +87,21 @@ func list_modified_files() ([]string, bool) {
 	return list_dirty_files(), false
 }
 
+func restore_to_reflog_point(sha1 string) {
+	git_cmd("reset", "--hard", sha1)
+}
+
+func get_head_ref() string {
+	return git_cmd("log", "-g", "--format=%H", "-n", "1")[0]
+}
+
 func changes_staged() bool {
 	_, err := exec.Command("git", "diff-index", "--cached", "--quiet", "HEAD", "--").Output()
 	return err != nil
+}
+
+func rebase_abort() {
+	git_cmd("rebase", "--abort")
 }
 
 func rebase_to_ref(sha1 string) error {
@@ -119,6 +131,10 @@ func expand_ref(sha1 string) (string, error) {
 type cleanup_func func()
 
 func noop() {}
+
+func update_commit_msg(sha1 string) {
+	git_cmd("commit", "--amend", "--fixup", sha1, "--no-edit")
+}
 
 // Commit uncommitted changes and return a cleanup function. If any changes have
 // been stages, only commit those and stash the remaining changes. In this case
