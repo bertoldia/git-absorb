@@ -91,6 +91,14 @@ func restore_to_reflog_point(sha1 string) {
 	git_cmd("reset", "--hard", sha1)
 }
 
+func reset_soft() {
+	git_cmd("reset", "--soft", "HEAD~1")
+}
+
+func reset() {
+	git_cmd("reset", "HEAD~1")
+}
+
 func get_head_ref() string {
 	return git_cmd("log", "-g", "--format=%H", "-n", "1")[0]
 }
@@ -129,6 +137,7 @@ func expand_ref(sha1 string) (string, error) {
 }
 
 type cleanup_func func()
+type undo_func func()
 
 func noop() {}
 
@@ -136,12 +145,13 @@ func update_commit_msg(sha1 string) {
 	git_cmd("commit", "--amend", "--fixup", sha1, "--no-edit")
 }
 
-// Commit uncommitted changes and return a cleanup function. If any changes have
-// been stages, only commit those and stash the remaining changes. In this case
-// the cleanup operation is to stash pop the remaining changes. If none of the
-// outstanding changed have been stages, commit them all. In this case the
-// cleanup function is a noop.
-func commit_changes(sha1 string) cleanup_func {
+// Commit uncommitted changes and return cleanup and undo functions. If any
+// changes have been staged, only commit those and stash the remaining changes.
+// In this case the cleanup operation is to stash pop and the cleanup operation
+// is to do a soft reset. If none of the outstanding changed have been stages,
+// commit them all. In this case the cleanup function is a noop and the cleanup
+// is a reset.
+func commit_changes(sha1 string) (cleanup_func, undo_func) {
 	if !changes_staged() {
 		git_cmd("add", "-u")
 	}
@@ -151,9 +161,9 @@ func commit_changes(sha1 string) cleanup_func {
 
 	if still_dirty := list_dirty_files(); len(still_dirty) != 0 {
 		stash()
-		return stash_pop
+		return stash_pop, reset_soft
 	}
-	return noop
+	return noop, reset
 }
 
 // Turn a slice into a set(ish)

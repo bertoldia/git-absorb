@@ -47,11 +47,13 @@ func find_possible_merge_commits(args *Args) []string {
 }
 
 func approach1(commits []string, args *Args) []string {
+	os.Setenv("GIT_EDITOR", "true")
 	var valid_commits = make([]string, 0)
-	cleanup := commit_changes(commits[0])
+	cleanup, undo := commit_changes(commits[0])
 	head_reflog := get_head_ref()
 	//defer restore_to_reflog_point(head_reflog)
 	defer cleanup()
+	defer undo()
 
 	for _, commit := range commits {
 		update_commit_msg(commit)
