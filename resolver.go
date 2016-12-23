@@ -29,10 +29,15 @@ func filter_candidate_commits(ccs []string) []string {
 	return filter_commits_by_referenced_file(ccs)
 }
 
-func find_possible_merge_commits() []string {
+func get_candidate_absorb_commits() []string {
 	candidate_commits := list_commits_in_branch()
 	if len(candidate_commits) < 1 {
 		return candidate_commits
 	}
+	// Is this a good idea?
 	return filter_candidate_commits(candidate_commits)
+}
+
+func find_possible_merge_commits(args *Args) []string {
+	return get_candidate_absorb_commits()
 }

@@ -30,7 +30,7 @@ func main() {
 	if args.target_commit != "" {
 		do_absorb(args)
 	} else {
-		candidate_commits := find_possible_merge_commits()
+		candidate_commits := find_possible_merge_commits(args)
 		if len(candidate_commits) != 1 {
 			exit(1, "%d candidate commits found on this branch.", len(candidate_commits))
 		}
