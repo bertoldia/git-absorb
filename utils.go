@@ -32,7 +32,14 @@ func exec_cmd(cmd string, args ...string) []string {
 	if err != nil {
 		log.Fatal("'"+cmd+" "+strings.Join(args, " ")+"' failed. ", err)
 	}
-	return parse_cmd_exec_result(res)
+	return _parse_cmd_exec_result(res)
+}
+
+func _parse_cmd_exec_result(res []byte) []string {
+	if len(res) == 0 {
+		return make([]string, 0)
+	}
+	return strings.Split(strings.Trim(string(res), " \n"), "\n")
 }
 
 func current_branch() string {
@@ -48,19 +55,12 @@ func merge_base(branch, upstream string) string {
 	return git_cmd("merge-base", upstream, branch)[0]
 }
 
-func parse_cmd_exec_result(res []byte) []string {
-	if len(res) == 0 {
-		return make([]string, 0)
-	}
-	return strings.Split(strings.Trim(string(res), " \n"), "\n")
-}
-
-func list_files_modified_by_commit(sha1 string) []string {
+func files_modified_by_commit(sha1 string) []string {
 	return git_cmd("diff-tree", "--no-commit-id", "--name-only", "-r", sha1)
 }
 
 // Return the sha1 of all commits in the current branch.
-func list_commits_in_branch() []string {
+func commits_in_branch() []string {
 	cb := current_branch()
 	us := branch_upstream(cb)
 	mb := merge_base(us, cb)
@@ -68,42 +68,42 @@ func list_commits_in_branch() []string {
 }
 
 // returns (possibly partially) staged files
-func list_staged_files() []string {
+func _staged_files() []string {
 	return git_cmd("diff-index", "--cached", "--name-only", "HEAD", "--")
 }
 
 // returns all dirty files (staged or otherwise)
-func list_dirty_files() []string {
+func _dirty_files() []string {
 	return git_cmd("diff-index", "--name-only", "HEAD", "--")
 }
 
 // List either file with staged changes or, if no changes have been staged, all
 // dirty files.
-func list_modified_files() ([]string, bool) {
-	staged := list_staged_files()
+func files_to_absorb() ([]string, bool) {
+	staged := _staged_files()
 	if len(staged) > 0 {
 		return staged, true
 	}
-	return list_dirty_files(), false
+	return _dirty_files(), false
 }
 
-func restore_to_reflog_point(sha1 string) {
+func reset_hard_to(sha1 string) {
 	git_cmd("reset", "--hard", sha1)
 }
 
-func reset_soft() {
+func reset_head_soft() {
 	git_cmd("reset", "--soft", "HEAD~1")
 }
 
-func reset() {
+func reset_head() {
 	git_cmd("reset", "HEAD~1")
 }
 
-func get_head_ref() string {
+func reflog_head() string {
 	return git_cmd("log", "-g", "--format=%H", "-n", "1")[0]
 }
 
-func changes_staged() bool {
+func are_changes_staged() bool {
 	_, err := exec.Command("git", "diff-index", "--cached", "--quiet", "HEAD", "--").Output()
 	return err != nil
 }
@@ -133,7 +133,7 @@ func expand_ref(sha1 string) (string, error) {
 	if err != nil {
 		return "", errors.New("'" + sha1 + "' is not a valid sha1.")
 	}
-	return parse_cmd_exec_result(res)[0], nil
+	return _parse_cmd_exec_result(res)[0], nil
 }
 
 type cleanup_func func()
@@ -147,23 +147,23 @@ func update_commit_msg(sha1 string) {
 
 // Commit uncommitted changes and return cleanup and undo functions. If any
 // changes have been staged, only commit those and stash the remaining changes.
-// In this case the cleanup operation is to stash pop and the cleanup operation
-// is to do a soft reset. If none of the outstanding changed have been stages,
-// commit them all. In this case the cleanup function is a noop and the cleanup
-// is a reset.
+// In this case the cleanup operation is to stash pop and the undo operation is
+// a soft reset on head. If none of the outstanding changed have been staged,
+// commit them all. In this case the cleanup function is a noop and the undo
+// operation is a (regular) reset of head.
 func commit_changes(sha1 string) (cleanup_func, undo_func) {
-	if !changes_staged() {
+	if !are_changes_staged() {
 		git_cmd("add", "-u")
 	}
 
 	var action string = "--fixup"
 	git_cmd("commit", action, sha1, "--no-edit")
 
-	if still_dirty := list_dirty_files(); len(still_dirty) != 0 {
+	if still_dirty := _dirty_files(); len(still_dirty) != 0 {
 		stash()
-		return stash_pop, reset_soft
+		return stash_pop, reset_head_soft
 	}
-	return noop, reset
+	return noop, reset_head
 }
 
 // Turn a slice into a set(ish)

@@ -20,7 +20,7 @@ func parse_args() *Args {
 }
 
 func main() {
-	files, _ := list_modified_files()
+	files, _ := files_to_absorb()
 	if len(files) == 0 {
 		exit(0, "Nothing to do...")
 	}
@@ -30,7 +30,7 @@ func main() {
 	if args.target_commit != "" {
 		do_absorb(args)
 	} else {
-		candidate_commits := find_possible_merge_commits(args)
+		candidate_commits := successful_absorb_commits(args)
 		if len(candidate_commits) != 1 {
 			exit(1, "%d candidate commits found on this branch.", len(candidate_commits))
 		}
