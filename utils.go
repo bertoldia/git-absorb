@@ -136,6 +136,18 @@ func expand_ref(sha1 string) (string, error) {
 	return _parse_cmd_exec_result(res)[0], nil
 }
 
+func human_commit(sha1 string) string {
+	return git_cmd("log", "--pretty=oneline", "--abbrev-commit", "-1", sha1)[0]
+}
+
+func human_commits(commits []string) []string {
+	var result = make([]string, 0)
+	for _, sha1 := range commits {
+		result = append(result, human_commit(sha1))
+	}
+	return result
+}
+
 type cleanup_func func()
 type undo_func func()
 
