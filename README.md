@@ -1,14 +1,13 @@
 # git-absorb
 
-A git command insipred by the mercurial command of the same name described
-[here](
-https://groups.google.com/forum/#!topic/mozilla.dev.version-control/nh4fITFlEMk).
+A git command inspired by the mercurial command of the same name described
+[here](https://groups.google.com/forum/#!topic/mozilla.dev.version-control).
 
 The gist of this command is to automagically fixup or squash uncommitted (though
 possibly staged) modifications into the right ancestor commit (or a user
 specified commit) in a working branch with no user interaction.
 
-The common use case or workflow is for e.g. to modifyg commits in response to
+The common use case or workflow is for e.g. to modify commits in response to
 issues raised during a code review, or when you change your mind about the
 content of existing commits in your working branch.
 
