@@ -2,13 +2,13 @@ package main
 
 import "os"
 
-func do_absorb(args *Args) {
+func do_absorb(commit string, args *Args) {
 	os.Setenv("GIT_EDITOR", "true")
 
-	cleanup, undo := commit_changes(args.target_commit)
+	cleanup, undo := commit_changes(commit)
 	defer cleanup()
 
-	if err := rebase_to_ref(args.target_commit); err != nil {
+	if err := rebase_to_ref(commit); err != nil {
 		rebase_abort()
 		undo()
 	}
