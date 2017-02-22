@@ -1,0 +1,20 @@
+# bash completion for git-absorb                          -*- shell-script -*-
+# goes in /usr/share/bash-completion/completions
+
+_git_absorb()
+{
+    local cur prev words cword
+    _init_completion || return
+    COMPREPLY=( )
+
+    first=${cur:0:1}
+    if [[ $first = "-" ]]; then
+			  COMPREPLY=( $( compgen -W '--print-candidates --machine-parsable --force --help' -- "$cur" ) )
+    elif [[ $cword -eq 1 ]]; then
+			commits=$( git-absorb --print-candidates --machine-parsable )
+      if [[ $? -eq 0 ]]; then
+			  COMPREPLY=( $( compgen -W '$commits' -- "$cur" ) )
+      fi
+    fi
+} &&
+complete -F _git_absorb git-absorb
