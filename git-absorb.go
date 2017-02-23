@@ -7,16 +7,21 @@ import (
 )
 
 type Args struct {
-	Force           bool `short:"f" long:"force" description:"Perform the absorb operation instead of just showing the commit(s) the outstanding changes could successfully be absorbed into."`
-	Squash          bool `short:"s" long:"squash" description:"Squash instead of fixup the changes into the relevant commit. NOT IMPLEMENTED"`
-	PrintCandidates bool `short:"p" long:"print-candidates" description:"Print the sha1 of all candidate commits (i.e. all commits in the branch) in a human readable format."`
-	Machine         bool `short:"m" long:"machine-readable" description:"Print the candidate commits in a machine-parsable format."`
+	PrintCandidates bool `short:"p" long:"print-candidates" description:"Print the SHA1 of all candidate commits (i.e. all commits in the branch) in a human readable format."`
+	Machine         bool `short:"m" long:"machine-parsable" description:"Print the candidate commits in a machine-parsable format (i.e. just the full SHA1)."`
+	Force           bool `short:"f" long:"force" description:"Do not undo the absorb attempt if it failed (e.g because of a merge conflict)."`
 	Target          struct {
-		Commit string `positional-arg-name:"target-commit"`
+		Commit string `positional-arg-name:"target-commit" description:"The SHA1 of the commit into which outstanding changes should be absorbed."`
 	} `positional-args:"yes"`
 }
 
 var args Args
+var parser = flags.NewParser(&args, flags.Default)
+var help = `Absorb (i.e. merge) outstanding changes into the specified commit.`
+
+func init() {
+	parser.LongDescription = strings.Replace(help, "\n", " ", -1)
+}
 
 func print_candidates(machine bool) {
 	if machine {
@@ -25,8 +30,8 @@ func print_candidates(machine bool) {
 	exit(0, "%s", strings.Join(human_commits(commits_in_branch()), "\n"))
 }
 
-func parse_args() *Args {
-	if _, err := flags.Parse(&args); err != nil {
+func parse_args() {
+	if _, err := parser.Parse(); err != nil {
 		if err.(*flags.Error).Type == flags.ErrHelp {
 			exit_ok()
 		}
@@ -39,12 +44,13 @@ func parse_args() *Args {
 			exit(2, err.Error())
 		}
 		args.Target.Commit = sha1
+	} else if !args.PrintCandidates {
+		exit(5, "One of --target-commit or --print-candidates is required.")
 	}
-	return &args
 }
 
 func main() {
-	args := parse_args()
+	parse_args()
 
 	wd_is_git_repo()
 
@@ -57,19 +63,9 @@ func main() {
 		exit(0, "Nothing to do...")
 	}
 
-	var target_commit string = args.Target.Commit
-	if target_commit == "" {
-		candidate_commits := successful_absorb_commits(args)
-
-		if len(candidate_commits) != 1 {
-			exit(1, "%d candidate commits found on this branch:\n%s",
-				len(candidate_commits), strings.Join(human_commits(candidate_commits), "\n"))
-		}
-		target_commit = candidate_commits[0]
+	if err := do_absorb(&args); err != nil {
+		exit(4, err.Error())
 	}
-
-	if args.Force {
-		do_absorb(target_commit, args)
-	}
-	exit(0, "Absorbed changes into commit '%s'", human_commit(target_commit))
+	exit(0, "Successfully Absorbed changes into commit '%s'",
+		human_commit(args.Target.Commit))
 }
