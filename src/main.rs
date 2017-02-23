@@ -1,9 +1,11 @@
+extern crate clap;
 extern crate git2;
 
 use std::env;
 use std::process::Command;
 use git2::Repository;
 use git2::string_array::StringArray;
+use clap::{Arg, App};
 
 fn print_remotes(remotes: StringArray) {
     for remote in remotes.iter() {
@@ -14,7 +16,7 @@ fn print_remotes(remotes: StringArray) {
     }
 }
 
-fn main() {
+fn tests() {
     let target_commit = env::args().nth(1).expect("Missing target commit.");
 
     let repo = match Repository::open(".") {
@@ -43,4 +45,30 @@ fn main() {
     println!("status: {}", &output.status);
     println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+}
+
+fn main() {
+    let matches = App::new("git-absorb")
+        .version("0.1.0")
+        .author("Axel von Bertoldi <bertoldia@gmail.com>")
+        .about("Absorb (i.e. merge) outstanding changes into the specified commit.")
+        .arg(Arg::with_name("print")
+            .short("p")
+            .long("print-candidates")
+            .conflicts_with("target")
+            .help("Print the SHA1 of all candidate commits i.e. all commits in the branch in a \
+                   human readable format."))
+        .arg(Arg::with_name("machine")
+            .short("m")
+            .long("machine-parsable")
+            .requires("print")
+            .help("Print the candidate commits in a machine-parsable format (i.e. just the full \
+                   SHA1)."))
+        .arg(Arg::with_name("target")
+            .index(1)
+            .conflicts_with("print")
+            .required(true)
+            .help("Print the candidate commits in a machine-parsable format (i.e. just the full \
+                   SHA1)."))
+        .get_matches();
 }
