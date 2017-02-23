@@ -121,8 +121,10 @@ func rebase_abort() {
 
 func rebase_to_ref(sha1 string) error {
 	args := []string{"rebase", "-i", "--autosquash", sha1 + "~1"}
-	_, err := exec.Command("git", args...).Output()
-	return err
+	if msg, err := exec.Command("git", args...).CombinedOutput(); err != nil {
+		return errors.New(string(msg))
+	}
+	return nil
 }
 
 func stash() {
