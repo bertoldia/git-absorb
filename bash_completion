@@ -9,7 +9,7 @@ _git_absorb()
 
     first=${cur:0:1}
     if [[ $first = "-" ]]; then
-			  COMPREPLY=( $( compgen -W '--print-candidates --machine-parsable --force --help' -- "$cur" ) )
+			  COMPREPLY=( $( compgen -W '--print-candidates --machine-parsable --force --no-recover --help' -- "$cur" ) )
     elif [[ $cword -eq 1 ]]; then
 			commits=$( git-absorb --print-candidates --machine-parsable )
       if [[ $? -eq 0 ]]; then
