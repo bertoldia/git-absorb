@@ -159,7 +159,7 @@ func human_commits(commits []string) []string {
 }
 
 type cleanup_func func()
-type undo_func func()
+type recover_func func()
 
 func noop() {}
 
@@ -173,7 +173,7 @@ func update_commit_msg(sha1 string) {
 // a soft reset on head. If none of the outstanding changed have been staged,
 // commit them all. In this case the cleanup function is a noop and the undo
 // operation is a (regular) reset of head.
-func commit_changes(sha1 string) (cleanup_func, undo_func) {
+func commit_changes(sha1 string) (cleanup_func, recover_func) {
 	if !are_changes_staged() {
 		git_cmd("add", "-u")
 	}

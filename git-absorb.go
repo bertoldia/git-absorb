@@ -9,7 +9,8 @@ import (
 type Args struct {
 	PrintCandidates bool `short:"p" long:"print-candidates" description:"Print the SHA1 of all candidate commits (i.e. all commits in the branch) in a human readable format."`
 	Machine         bool `short:"m" long:"machine-parsable" description:"Print the candidate commits in a machine-parsable format (i.e. just the full SHA1)."`
-	Force           bool `short:"f" long:"force" description:"Do not undo the absorb attempt if it failed (e.g because of a merge conflict)."`
+	NoRecover       bool `short:"n" long:"no-recover" description:"Do not undo the absorb attempt if it failed (e.g because of a merge conflict)."`
+	Force           bool `short:"f" long:"force" description:"Attempt the absorb even if the target commit is not from the current working-set (branch)"`
 	Target          struct {
 		Commit string `positional-arg-name:"target-commit" description:"The SHA1 of the commit into which outstanding changes should be absorbed."`
 	} `positional-args:"yes"`
