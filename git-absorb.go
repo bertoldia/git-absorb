@@ -26,51 +26,52 @@ func init() {
 
 func print_candidates(machine bool) {
 	if machine {
-		exit(0, "%s", strings.Join(commits_in_branch(), " "))
+		Exit(0, "%s", strings.Join(CommitsInBranch(), " "))
 	}
-	exit(0, "%s", strings.Join(human_commits(commits_in_branch()), "\n"))
+	Exit(0, "%s", strings.Join(HumanCommits(CommitsInBranch()), "\n"))
 }
 
 func parse_args() {
 	if _, err := parser.Parse(); err != nil {
 		if err.(*flags.Error).Type == flags.ErrHelp {
-			exit_ok()
+			ExitOK()
 		}
-		exit(3, "%v", err)
+		Exit(3, "%v", err)
 	}
 
 	if args.Target.Commit != "" {
 		sha1, err := expand_ref(args.Target.Commit)
 		if err != nil {
-			exit(2, err.Error())
+			Exit(2, err.Error())
 		}
 		args.Target.Commit = sha1
 	} else if !args.PrintCandidates {
-		exit(5, "One of --target-commit or --print-candidates is required.")
+		Exit(5, "One of --target-commit or --print-candidates is required.")
 	}
 }
 
 func main() {
 	parse_args()
 
-	wd_is_git_repo()
+	EnsureCwdIsGitRepo()
 
 	if args.PrintCandidates {
 		print_candidates(args.Machine)
 	}
 
-	if !CommitInWorkingSet(args.Target.Commit) && !args.Force {
-		exit(1, "Commit %s is not in working-set.", args.Target.Commit)
+	if !CommitIsInWorkingSet(args.Target.Commit) && !args.Force {
+		Exit(1, "Commit %s is not in working-set.", args.Target.Commit)
 	}
 
-	files, _ := files_to_absorb()
+	files, _ := FilesToAbsorb()
 	if len(files) == 0 {
-		exit(0, "Nothing to do...")
+		Exit(0, "Nothing to do...")
 	}
 
 	if err := do_absorb(&args); err != nil {
-		exit(4, err.Error())
+		Exit(4, err.Error())
 	}
-	exit(0, "Successfully Absorbed changes into commit '%s'",
+
+	Exit(0, "Successfully Absorbed changes into commit '%s'",
 		human_commit(args.Target.Commit))
 }

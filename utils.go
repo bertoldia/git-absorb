@@ -9,11 +9,11 @@ import (
 	"strings"
 )
 
-func exit_ok() {
-	exit(0, "")
+func ExitOK() {
+	Exit(0, "")
 }
 
-func exit(code int, format string, args ...interface{}) {
+func Exit(code int, format string, args ...interface{}) {
 	if len(format) > 0 {
 		if !strings.HasSuffix(format, "\n") {
 			format = format + "\n"
@@ -32,70 +32,62 @@ func exec_cmd(cmd string, args ...string) []string {
 	if err != nil {
 		log.Fatal("'"+cmd+" "+strings.Join(args, " ")+"' failed. ", err)
 	}
-	return _parse_cmd_exec_result(res)
+	return parse_cmd_exec_result(res)
 }
 
-func wd_is_git_repo() {
-	res, err := exec.Command("git", "rev-parse", "--show-toplevel").CombinedOutput()
-	if err != nil {
-		exit(128, string(res))
-	}
-}
-
-func _parse_cmd_exec_result(res []byte) []string {
+func parse_cmd_exec_result(res []byte) []string {
 	if len(res) == 0 {
 		return make([]string, 0)
 	}
 	return strings.Split(strings.Trim(string(res), " \n"), "\n")
 }
 
-func current_branch() string {
+func EnsureCwdIsGitRepo() {
+	res, err := exec.Command("git", "rev-parse", "--show-toplevel").CombinedOutput()
+	if err != nil {
+		Exit(128, string(res))
+	}
+}
+
+func CurrentBranch() string {
 	//return git_cmd("rev-parse", "--abbrev-ref", "HEAD")[0]
 	return git_cmd("name-rev", "--name-only", "HEAD")[0]
 }
 
-func branch_upstream(branch string) string {
+func Upstream(branch string) string {
 	return git_cmd("rev-parse", "--abbrev-ref", branch+"@{upstream}")[0]
 }
 
-func merge_base(branch, upstream string) string {
+func MergeBase(branch, upstream string) string {
 	return git_cmd("merge-base", upstream, branch)[0]
 }
 
-func files_modified_by_commit(sha1 string) []string {
-	return git_cmd("diff-tree", "--no-commit-id", "--name-only", "-r", sha1)
-}
-
 // Return the sha1 of all commits in the current branch.
-func commits_in_branch() []string {
-	cb := current_branch()
-	us := branch_upstream(cb)
-	mb := merge_base(us, cb)
+func CommitsInBranch() []string {
+	cb := CurrentBranch()
+	us := Upstream(cb)
+	mb := MergeBase(us, cb)
 	return git_cmd("rev-list", mb+".."+cb)
 }
 
 // returns (possibly partially) staged files
-func _staged_files() []string {
+func staged_files() []string {
 	return git_cmd("diff-index", "--cached", "--name-only", "HEAD", "--")
 }
 
 // returns all dirty files (staged or otherwise)
-func _dirty_files() []string {
+func dirty_files() []string {
 	return git_cmd("diff-index", "--name-only", "HEAD", "--")
 }
 
 // List either file with staged changes or, if no changes have been staged, all
 // dirty files.
-func files_to_absorb() ([]string, bool) {
-	staged := _staged_files()
+func FilesToAbsorb() ([]string, bool) {
+	staged := staged_files()
 	if len(staged) > 0 {
 		return staged, true
 	}
-	return _dirty_files(), false
-}
-
-func reset_hard_to(sha1 string) {
-	git_cmd("reset", "--hard", sha1)
+	return dirty_files(), false
 }
 
 func reset_head_soft() {
@@ -104,10 +96,6 @@ func reset_head_soft() {
 
 func reset_head() {
 	git_cmd("reset", "HEAD~1")
-}
-
-func reflog_head() string {
-	return git_cmd("log", "-g", "--format=%H", "-n", "1")[0]
 }
 
 func are_changes_staged() bool {
@@ -131,7 +119,7 @@ func stash() {
 	git_cmd("stash", "--quiet")
 }
 
-func stash_pop() {
+func StashPop() {
 	git_cmd("stash", "pop", "--quiet")
 }
 
@@ -143,14 +131,14 @@ func expand_ref(sha1 string) (string, error) {
 	if err != nil {
 		return "", errors.New("'" + sha1 + "' is not a valid sha1.")
 	}
-	return _parse_cmd_exec_result(res)[0], nil
+	return parse_cmd_exec_result(res)[0], nil
 }
 
 func human_commit(sha1 string) string {
 	return git_cmd("log", "--pretty=oneline", "--abbrev-commit", "-1", sha1)[0]
 }
 
-func human_commits(commits []string) []string {
+func HumanCommits(commits []string) []string {
 	var result = make([]string, 0)
 	for _, sha1 := range commits {
 		result = append(result, human_commit(sha1))
@@ -163,12 +151,8 @@ type recover_func func()
 
 func noop() {}
 
-func update_commit_msg(sha1 string) {
-	git_cmd("commit", "--amend", "--fixup", sha1, "--no-edit")
-}
-
-func CommitInWorkingSet(sha1 string) bool {
-	for _, s := range commits_in_branch() {
+func CommitIsInWorkingSet(sha1 string) bool {
+	for _, s := range CommitsInBranch() {
 		if sha1 == s {
 			return true
 		}
@@ -182,7 +166,7 @@ func CommitInWorkingSet(sha1 string) bool {
 // a soft reset on head. If none of the outstanding changed have been staged,
 // commit them all. In this case the cleanup function is a noop and the undo
 // operation is a (regular) reset of head.
-func commit_changes(sha1 string) (cleanup_func, recover_func) {
+func CommitChanges(sha1 string) (cleanup_func, recover_func) {
 	if !are_changes_staged() {
 		git_cmd("add", "-u")
 	}
@@ -190,18 +174,9 @@ func commit_changes(sha1 string) (cleanup_func, recover_func) {
 	var action string = "--fixup"
 	git_cmd("commit", action, sha1, "--no-edit")
 
-	if still_dirty := _dirty_files(); len(still_dirty) != 0 {
+	if still_dirty := dirty_files(); len(still_dirty) != 0 {
 		stash()
-		return stash_pop, reset_head_soft
+		return StashPop, reset_head_soft
 	}
 	return noop, reset_head
-}
-
-// Turn a slice into a set(ish)
-func set(a []string) map[string]bool {
-	res := make(map[string]bool, len(a))
-	for _, val := range a {
-		res[val] = true
-	}
-	return res
 }
