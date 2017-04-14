@@ -59,6 +59,10 @@ func main() {
 		print_candidates(args.Machine)
 	}
 
+	if !CommitInWorkingSet(args.Target.Commit) && !args.Force {
+		exit(1, "Commit %s is not in working-set.", args.Target.Commit)
+	}
+
 	files, _ := files_to_absorb()
 	if len(files) == 0 {
 		exit(0, "Nothing to do...")

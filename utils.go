@@ -167,6 +167,15 @@ func update_commit_msg(sha1 string) {
 	git_cmd("commit", "--amend", "--fixup", sha1, "--no-edit")
 }
 
+func CommitInWorkingSet(sha1 string) bool {
+	for _, s := range commits_in_branch() {
+		if sha1 == s {
+			return true
+		}
+	}
+	return false
+}
+
 // Commit uncommitted changes and return cleanup and undo functions. If any
 // changes have been staged, only commit those and stash the remaining changes.
 // In this case the cleanup operation is to stash pop and the undo operation is
