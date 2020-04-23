@@ -107,7 +107,7 @@ func rebase_abort() {
 	gitCmd("rebase", "--abort")
 }
 
-func rebase_to_ref(sha1 string) error {
+func rebaseToRef(sha1 string) error {
 	args := []string{"rebase", "-i", "--autosquash", sha1 + "~1"}
 	if msg, err := exec.Command("git", args...).CombinedOutput(); err != nil {
 		return errors.New(string(msg))

@@ -7,7 +7,7 @@ func doAbsorb(args *Args) error {
 
 	cleanupFn, recoverFn := CommitChanges(args.Target.Commit)
 
-	if err := rebase_to_ref(args.Target.Commit); err != nil {
+	if err := rebaseToRef(args.Target.Commit); err != nil {
 		if args.NoRecover {
 			return err
 		}
