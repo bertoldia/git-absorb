@@ -23,7 +23,7 @@ func Exit(code int, format string, args ...interface{}) {
 	os.Exit(code)
 }
 
-func git_cmd(args ...string) []string {
+func gitCmd(args ...string) []string {
 	return exec_cmd("git", args...)
 }
 
@@ -50,16 +50,16 @@ func EnsureCwdIsGitRepo() {
 }
 
 func CurrentBranch() string {
-	//return git_cmd("rev-parse", "--abbrev-ref", "HEAD")[0]
-	return git_cmd("name-rev", "--name-only", "HEAD")[0]
+	//return gitCmd("rev-parse", "--abbrev-ref", "HEAD")[0]
+	return gitCmd("name-rev", "--name-only", "HEAD")[0]
 }
 
 func Upstream(branch string) string {
-	return git_cmd("rev-parse", "--abbrev-ref", branch+"@{upstream}")[0]
+	return gitCmd("rev-parse", "--abbrev-ref", branch+"@{upstream}")[0]
 }
 
 func MergeBase(branch, upstream string) string {
-	return git_cmd("merge-base", upstream, branch)[0]
+	return gitCmd("merge-base", upstream, branch)[0]
 }
 
 // Return the sha1 of all commits in the current branch.
@@ -67,17 +67,17 @@ func CommitsInBranch() []string {
 	cb := CurrentBranch()
 	us := Upstream(cb)
 	mb := MergeBase(us, cb)
-	return git_cmd("rev-list", mb+".."+cb)
+	return gitCmd("rev-list", mb+".."+cb)
 }
 
 // returns (possibly partially) staged files
 func staged_files() []string {
-	return git_cmd("diff-index", "--cached", "--name-only", "HEAD", "--")
+	return gitCmd("diff-index", "--cached", "--name-only", "HEAD", "--")
 }
 
 // returns all dirty files (staged or otherwise)
 func dirty_files() []string {
-	return git_cmd("diff-index", "--name-only", "HEAD", "--")
+	return gitCmd("diff-index", "--name-only", "HEAD", "--")
 }
 
 // List either file with staged changes or, if no changes have been staged, all
@@ -91,11 +91,11 @@ func FilesToAbsorb() ([]string, bool) {
 }
 
 func reset_head_soft() {
-	git_cmd("reset", "--soft", "HEAD~1")
+	gitCmd("reset", "--soft", "HEAD~1")
 }
 
 func reset_head() {
-	git_cmd("reset", "HEAD~1")
+	gitCmd("reset", "HEAD~1")
 }
 
 func are_changes_staged() bool {
@@ -104,7 +104,7 @@ func are_changes_staged() bool {
 }
 
 func rebase_abort() {
-	git_cmd("rebase", "--abort")
+	gitCmd("rebase", "--abort")
 }
 
 func rebase_to_ref(sha1 string) error {
@@ -116,11 +116,11 @@ func rebase_to_ref(sha1 string) error {
 }
 
 func stash() {
-	git_cmd("stash", "--quiet")
+	gitCmd("stash", "--quiet")
 }
 
 func StashPop() {
-	git_cmd("stash", "pop", "--quiet")
+	gitCmd("stash", "pop", "--quiet")
 }
 
 // Expand a ref (in the form of a shortened sha1 or other valid ref spec like
@@ -135,7 +135,7 @@ func expand_ref(sha1 string) (string, error) {
 }
 
 func human_commit(sha1 string) string {
-	return git_cmd("log", "--pretty=oneline", "--abbrev-commit", "-1", sha1)[0]
+	return gitCmd("log", "--pretty=oneline", "--abbrev-commit", "-1", sha1)[0]
 }
 
 func HumanCommits(commits []string) []string {
@@ -168,11 +168,11 @@ func CommitIsInWorkingSet(sha1 string) bool {
 // operation is a (regular) reset of head.
 func CommitChanges(sha1 string) (cleanup_func, recover_func) {
 	if !are_changes_staged() {
-		git_cmd("add", "-u")
+		gitCmd("add", "-u")
 	}
 
 	var action string = "--fixup"
-	git_cmd("commit", action, sha1, "--no-edit")
+	gitCmd("commit", action, sha1, "--no-edit")
 
 	if still_dirty := dirty_files(); len(still_dirty) != 0 {
 		stash()
