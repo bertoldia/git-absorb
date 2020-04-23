@@ -40,7 +40,7 @@ func parse_args() {
 	}
 
 	if args.Target.Commit != "" {
-		sha1, err := expand_ref(args.Target.Commit)
+		sha1, err := expandRef(args.Target.Commit)
 		if err != nil {
 			Exit(2, err.Error())
 		}
