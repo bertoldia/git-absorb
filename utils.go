@@ -94,7 +94,7 @@ func resetHeadSoft() {
 	gitCmd("reset", "--soft", "HEAD~1")
 }
 
-func reset_head() {
+func resetHead() {
 	gitCmd("reset", "HEAD~1")
 }
 
@@ -178,5 +178,5 @@ func CommitChanges(sha1 string) (cleanup_func, recover_func) {
 		stash()
 		return StashPop, resetHeadSoft
 	}
-	return noop, reset_head
+	return noop, resetHead
 }
