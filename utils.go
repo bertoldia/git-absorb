@@ -90,7 +90,7 @@ func FilesToAbsorb() ([]string, bool) {
 	return dirty_files(), false
 }
 
-func reset_head_soft() {
+func resetHeadSoft() {
 	gitCmd("reset", "--soft", "HEAD~1")
 }
 
@@ -176,7 +176,7 @@ func CommitChanges(sha1 string) (cleanup_func, recover_func) {
 
 	if still_dirty := dirty_files(); len(still_dirty) != 0 {
 		stash()
-		return StashPop, reset_head_soft
+		return StashPop, resetHeadSoft
 	}
 	return noop, reset_head
 }
