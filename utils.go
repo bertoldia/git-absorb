@@ -98,7 +98,7 @@ func resetHead() {
 	gitCmd("reset", "HEAD~1")
 }
 
-func are_changes_staged() bool {
+func areChangesStaged() bool {
 	_, err := exec.Command("git", "diff-index", "--cached", "--quiet", "HEAD", "--").Output()
 	return err != nil
 }
@@ -167,7 +167,7 @@ func CommitIsInWorkingSet(sha1 string) bool {
 // commit them all. In this case the cleanup function is a noop and the undo
 // operation is a (regular) reset of head.
 func CommitChanges(sha1 string) (cleanup_func, recover_func) {
-	if !are_changes_staged() {
+	if !areChangesStaged() {
 		gitCmd("add", "-u")
 	}
 
