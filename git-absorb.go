@@ -68,7 +68,7 @@ func main() {
 		Exit(0, "Nothing to do...")
 	}
 
-	if err := do_absorb(&args); err != nil {
+	if err := doAbsorb(&args); err != nil {
 		Exit(4, err.Error())
 	}
 

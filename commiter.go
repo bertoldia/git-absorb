@@ -2,7 +2,7 @@ package main
 
 import "os"
 
-func do_absorb(args *Args) error {
+func doAbsorb(args *Args) error {
 	os.Setenv("GIT_EDITOR", "true")
 
 	cleanupFn, recoverFn := CommitChanges(args.Target.Commit)
