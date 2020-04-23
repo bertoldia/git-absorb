@@ -2,12 +2,12 @@ package main
 
 import "os"
 
-func do_absorb(args *Args) error {
+func doAbsorb(args *Args) error {
 	os.Setenv("GIT_EDITOR", "true")
 
 	cleanupFn, recoverFn := CommitChanges(args.Target.Commit)
 
-	if err := rebase_to_ref(args.Target.Commit); err != nil {
+	if err := rebaseToRef(args.Target.Commit); err != nil {
 		if args.NoRecover {
 			return err
 		}

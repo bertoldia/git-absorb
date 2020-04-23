@@ -23,7 +23,7 @@ func Exit(code int, format string, args ...interface{}) {
 	os.Exit(code)
 }
 
-func git_cmd(args ...string) []string {
+func gitCmd(args ...string) []string {
 	return exec_cmd("git", args...)
 }
 
@@ -50,16 +50,16 @@ func EnsureCwdIsGitRepo() {
 }
 
 func CurrentBranch() string {
-	//return git_cmd("rev-parse", "--abbrev-ref", "HEAD")[0]
-	return git_cmd("name-rev", "--name-only", "HEAD")[0]
+	//return gitCmd("rev-parse", "--abbrev-ref", "HEAD")[0]
+	return gitCmd("name-rev", "--name-only", "HEAD")[0]
 }
 
 func Upstream(branch string) string {
-	return git_cmd("rev-parse", "--abbrev-ref", branch+"@{upstream}")[0]
+	return gitCmd("rev-parse", "--abbrev-ref", branch+"@{upstream}")[0]
 }
 
 func MergeBase(branch, upstream string) string {
-	return git_cmd("merge-base", upstream, branch)[0]
+	return gitCmd("merge-base", upstream, branch)[0]
 }
 
 // Return the sha1 of all commits in the current branch.
@@ -67,17 +67,17 @@ func CommitsInBranch() []string {
 	cb := CurrentBranch()
 	us := Upstream(cb)
 	mb := MergeBase(us, cb)
-	return git_cmd("rev-list", mb+".."+cb)
+	return gitCmd("rev-list", mb+".."+cb)
 }
 
 // returns (possibly partially) staged files
 func staged_files() []string {
-	return git_cmd("diff-index", "--cached", "--name-only", "HEAD", "--")
+	return gitCmd("diff-index", "--cached", "--name-only", "HEAD", "--")
 }
 
 // returns all dirty files (staged or otherwise)
 func dirty_files() []string {
-	return git_cmd("diff-index", "--name-only", "HEAD", "--")
+	return gitCmd("diff-index", "--name-only", "HEAD", "--")
 }
 
 // List either file with staged changes or, if no changes have been staged, all
@@ -90,24 +90,24 @@ func FilesToAbsorb() ([]string, bool) {
 	return dirty_files(), false
 }
 
-func reset_head_soft() {
-	git_cmd("reset", "--soft", "HEAD~1")
+func resetHeadSoft() {
+	gitCmd("reset", "--soft", "HEAD~1")
 }
 
-func reset_head() {
-	git_cmd("reset", "HEAD~1")
+func resetHead() {
+	gitCmd("reset", "HEAD~1")
 }
 
-func are_changes_staged() bool {
+func areChangesStaged() bool {
 	_, err := exec.Command("git", "diff-index", "--cached", "--quiet", "HEAD", "--").Output()
 	return err != nil
 }
 
 func rebase_abort() {
-	git_cmd("rebase", "--abort")
+	gitCmd("rebase", "--abort")
 }
 
-func rebase_to_ref(sha1 string) error {
+func rebaseToRef(sha1 string) error {
 	args := []string{"rebase", "-i", "--autosquash", sha1 + "~1"}
 	if msg, err := exec.Command("git", args...).CombinedOutput(); err != nil {
 		return errors.New(string(msg))
@@ -116,16 +116,16 @@ func rebase_to_ref(sha1 string) error {
 }
 
 func stash() {
-	git_cmd("stash", "--quiet")
+	gitCmd("stash", "--quiet")
 }
 
 func StashPop() {
-	git_cmd("stash", "pop", "--quiet")
+	gitCmd("stash", "pop", "--quiet")
 }
 
 // Expand a ref (in the form of a shortened sha1 or other valid ref spec like
 // HEAD) to the full sha1. Also useful for verifying the specified ref is valid.
-func expand_ref(sha1 string) (string, error) {
+func expandRef(sha1 string) (string, error) {
 	res, err := exec.Command("git", "rev-parse", "--verify",
 		strings.TrimRight(sha1, " ")).Output()
 	if err != nil {
@@ -135,7 +135,7 @@ func expand_ref(sha1 string) (string, error) {
 }
 
 func human_commit(sha1 string) string {
-	return git_cmd("log", "--pretty=oneline", "--abbrev-commit", "-1", sha1)[0]
+	return gitCmd("log", "--pretty=oneline", "--abbrev-commit", "-1", sha1)[0]
 }
 
 func HumanCommits(commits []string) []string {
@@ -167,16 +167,16 @@ func CommitIsInWorkingSet(sha1 string) bool {
 // commit them all. In this case the cleanup function is a noop and the undo
 // operation is a (regular) reset of head.
 func CommitChanges(sha1 string) (cleanup_func, recover_func) {
-	if !are_changes_staged() {
-		git_cmd("add", "-u")
+	if !areChangesStaged() {
+		gitCmd("add", "-u")
 	}
 
 	var action string = "--fixup"
-	git_cmd("commit", action, sha1, "--no-edit")
+	gitCmd("commit", action, sha1, "--no-edit")
 
 	if still_dirty := dirty_files(); len(still_dirty) != 0 {
 		stash()
-		return StashPop, reset_head_soft
+		return StashPop, resetHeadSoft
 	}
-	return noop, reset_head
+	return noop, resetHead
 }
